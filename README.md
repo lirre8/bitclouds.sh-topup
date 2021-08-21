@@ -34,15 +34,15 @@ Currently integrated lightning wallets are lnd anc c-lightning. You need one of 
 ### Examples
 To simply topup an instance with 10000 sats using c-lightning
 
-    bitclouds-topup --host {host-name} --amount 10000 --wallet c-lightning
+    bitclouds-topup.sh --host {host-name} --amount 10000 --wallet c-lightning
 
 To topup an instance with 10000 sats only if current balance is below 30000 using lnd
 
-    bitclouds-topup --host {host-name} --amount 10000 --max-balance 30000 --wallet lnd
+    bitclouds-topup.sh --host {host-name} --amount 10000 --max-balance 30000 --wallet lnd
 
 By using cron it can be setup to automatically topup your instance when the balance has gone below the minimum wanted level. For example, this cron command will run the script every day at 1am. The script will topup the instance with 10000 sats only if the current balance is below 30000 and save the output to the provided log file. Note that it can be necessary to enter the full path of the commands when using crontab on Linux
 
-    0 1 * * * /path/to/bitclouds-topup --host {host-name} --amount 10000 --max-balance 30000 --wallet lnd --lncli /path/to/lncli --print-time >> /path/to/bitclouds-topup.log 2>&1
+    0 1 * * * /path/to/bitclouds-topup.sh --host {host-name} --amount 10000 --max-balance 30000 --wallet lnd --lncli /path/to/lncli --print-time >> /path/to/bitclouds-topup.log 2>&1
 
 ## License
 
