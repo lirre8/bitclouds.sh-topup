@@ -1,5 +1,5 @@
 # bitclouds.sh-topup
-Topup script for bitclouds.sh. Can be setup to automatically topup your instances using lightning network when the balance is getting low.
+Topup script for [bitclouds.sh](https://github.com/bitcoin-software/bitclouds.sh). Can be setup to automatically topup your instances using lightning network when the balance is getting low.
 
 ## Prerequisites
 Currently integrated lightning wallets are lnd anc c-lightning. You need one of those installed.
