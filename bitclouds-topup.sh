@@ -2,6 +2,7 @@
 
 LIGHTNING_CLI="lightning-cli"
 LNCLI="lncli"
+LNBITS_DOMAIN="lnbits.com"
 PRINT_TIME=false
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -21,6 +22,16 @@ do
       ;;
     --lightning-cli)
       LIGHTNING_CLI="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --lnbits-admin-key)
+      LNBITS_ADMIN_KEY="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --lnbits-domain)
+      LNBITS_DOMAIN="$2"
       shift # past argument
       shift # past value
       ;;
@@ -80,13 +91,18 @@ if [ -n "$MAX_BALANCE" ] && ! [[ "$MAX_BALANCE" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-if ! [[ "$WALLET" =~ ^(lnd|c-lightning)$ ]]; then
-  >&2 echo "ERROR: Invalid wallet '$WALLET' (supported wallets are [lnd, c-lightning])"
+if ! [[ "${WALLET,,}" =~ ^(lnd|c-lightning|lnbits)$ ]]; then
+  >&2 echo "ERROR: Invalid wallet '$WALLET' (supported wallets are [lnd, c-lightning, LNbits])"
+  exit 1
+fi
+
+if [[ "${WALLET,,}" == "lnbits" ]] && [ -z "$LNBITS_ADMIN_KEY" ]; then
+  >&2 echo "ERROR: Missing argument '--lnbits-admin-key'"
   exit 1
 fi
 
 # Test if wallet is running
-case "$WALLET" in
+case "${WALLET,,}" in
   "lnd")
     $LNCLI getinfo > /dev/null 2>&1
     ;;
@@ -119,36 +135,44 @@ if [ "$invoice" == "null" ]; then
   exit 1
 fi
 
-case "$WALLET" in
+do_invoice_amount_check=true
+case "${WALLET,,}" in
   "lnd")
     invoice_amount=$($LNCLI decodepayreq "$invoice" | jq -r '.num_satoshis')
     ;;
   "c-lightning")
     invoice_amount=$($LIGHTNING_CLI decodepay "$invoice" | jq -r '.msatoshi' | sed 's/000$//')
     ;;
+  "lnbits")
+    do_invoice_amount_check=false
+    ;;
 esac
 
-if ! [[ "$invoice_amount" =~ ^[0-9]+$ ]]; then
+if $do_invoice_amount_check && ! [[ "$invoice_amount" =~ ^[0-9]+$ ]]; then
   >&2 echo "ERROR: Failed to decode invoice '$invoice'"
   exit 1
 fi
 
-if [ "$invoice_amount" -ne "$AMOUNT" ]; then
+if $do_invoice_amount_check && [ "$invoice_amount" -ne "$AMOUNT" ]; then
   >&2 echo "ERROR: Failed to verify amount in invoice '$invoice'"
   exit 1
 fi
 
 echo "Paying $AMOUNT sats using $WALLET:"
 
-case "$WALLET" in
+case "${WALLET,,}" in
   "lnd")
     $LNCLI payinvoice --force "$invoice"
     ;;
   "c-lightning")
     $LIGHTNING_CLI pay "$invoice" 
     ;;
+  "lnbits")
+    curl -w "\n" "https://$LNBITS_DOMAIN/api/v1/payments" -d '{"out": true, "bolt11": "'"$invoice"'"}' -H "X-Api-Key: $LNBITS_ADMIN_KEY" -H "Content-type: application/json"
+    ;;
 esac
 
+sleep 1 # Bitclouds server responds with HTTP status 500 if the status call is made too fast
 new_balance=$(curl -s "https://bitclouds.sh/status/$HOST" | jq -r '.balance')
 
 echo "New balance: $new_balance"

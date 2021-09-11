@@ -2,7 +2,7 @@
 Topup script for [bitclouds.sh](https://github.com/bitcoin-software/bitclouds.sh). Can be setup to automatically topup your instances using lightning network when the balance is getting low.
 
 ## Prerequisites
-Currently integrated lightning wallets are lnd anc c-lightning. You need one of those installed.
+Currently integrated lightning wallets are lnd, c-lightning and LNbits.
 
 ### Dependencies
  - curl
@@ -19,6 +19,12 @@ Currently integrated lightning wallets are lnd anc c-lightning. You need one of 
     --lightning-cli
             Changes the command to use for c-lightning. Defaults to 'lightning-cli'
 
+    --lnbits-admin-key
+            Sets the admin key for the LNbits wallet. Must be provided if wallet LNbits is used
+
+    --lnbits-domain
+            Sets the LNbits domain. Defaults to 'lnbits.com'
+
     --lncli
             Changes the command to use for lnd. Defaults to 'lncli'
 
@@ -29,7 +35,7 @@ Currently integrated lightning wallets are lnd anc c-lightning. You need one of 
             Boolean. Prints current time when the script starts executing
 
     --wallet|-w
-            Selects which wallet to use. Must be 'lnd' or 'c-lightning'
+            Selects which wallet to use. Currently supported are 'lnd', 'c-lightning' and 'lnbits'
 
 ### Examples
 To simply topup an instance with 10000 sats using c-lightning
